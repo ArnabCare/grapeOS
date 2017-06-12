@@ -69,7 +69,11 @@ void main()
             (go ahead and try without this, you will see) */
         memset (dbl_buffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
 
-        /* DRAW ALL BITMAPS AND DO GUI CODE HERE */
+        union REGS regs;
+
+	regs.h.ah = 0x00;  /* function 00h = mode set */
+	regs.h.al = 0x13;  /* 256-color */
+	int86(0x10,&regs,&regs); /* do it! */
 
         /* Draws the double buffer */
         update_screen();
