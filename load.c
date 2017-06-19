@@ -1,82 +1,85 @@
-unsigned char *VGA = (unsigned char *)0xA0000000L;
-unsigned char *dbl_buffer;
 
-typedef struct tagBITMAP              /* the structure for a bitmap. */
-{
-    unsigned int width;
-    unsigned int height;
-    unsigned char *data;
-} BITMAP;
+startgui(){
+	unsigned char *VGA = (unsigned char *)0xA0000000L;
+	unsigned char *dbl_buffer;
 
-typedef struct tagRECT
-{
-    long x1;
-    long y1;
-    long x2;
-    long y2;
-} RECT;
+	typedef struct tagBITMAP              /* the structure for a bitmap. */
+	{
+	    unsigned int width;
+	    unsigned int height;
+	    unsigned char *data;
+	} BITMAP;
 
-void init_dbl_buffer(void)
-{
-    dbl_buffer = (unsigned char *) malloc (SCREEN_WIDTH * SCREEN_HEIGHT);
-    if (dbl_buffer == NULL)
-    {
-	printf("Not enough memory for double buffer.\n");
-	getch();
-	exit(1);
-    }
-}
+	typedef struct tagRECT
+	{
+	    long x1;
+	    long y1;
+	    long x2;
+	    long y2;
+	} RECT;
 
-void update_screen(void)
-{
-    #ifdef VERTICAL_RETRACE
-      while ((inportb(0x3DA) & 0x08));
-      while (!(inportb(0x3DA) & 0x08));
-    #endif
-    memcpy(VGA, dbl_buffer, (unsigned int)(SCREEN_WIDTH * SCREEN_HEIGHT));
-}
+	void init_dbl_buffer(void)
+	{
+	    dbl_buffer = (unsigned char *) malloc (SCREEN_WIDTH * SCREEN_HEIGHT);
+	    if (dbl_buffer == NULL)
+	    {
+		printf("Not enough memory for double buffer.\n");
+		getch();
+		exit(1);
+	    }
+	}
 
-void setpixel (BITMAP *bmp, int x, int y, unsigned char color)
-{
-    bmp->data[y * bmp->width + x];
-}
+	void update_screen(void)
+	{
+	    #ifdef VERTICAL_RETRACE
+	      while ((inportb(0x3DA) & 0x08));
+	      while (!(inportb(0x3DA) & 0x08));
+	    #endif
+	    memcpy(VGA, dbl_buffer, (unsigned int)(SCREEN_WIDTH * SCREEN_HEIGHT));
+	}
 
-/* Draws a filled in rectangle IN A BITMAP. To fill a full bitmap call as
-drawrect (&bmp, 0, 0, bmp.width, bmp.height, color); */
-void drawrect(BITMAP *bmp, unsigned short x, unsigned short y,
-                     unsigned short x2, unsigned short y2,
-                     unsigned char color)
-{
-    unsigned short tx, ty;
-    for (ty = y; ty height; j++)
-    {
-	memcpy(&dbl_buffer[screen_offset], &bmp->data[bitmap_offset], bmp->width);
+	void setpixel (BITMAP *bmp, int x, int y, unsigned char color)
+	{
+	    bmp->data[y * bmp->width + x];
+	}
 
-	bitmap_offset += bmp->width;
-	screen_offset += SCREEN_WIDTH;
-    }
-}
+	/* Draws a filled in rectangle IN A BITMAP. To fill a full bitmap call as
+	drawrect (&bmp, 0, 0, bmp.width, bmp.height, color); */
+	void drawrect(BITMAP *bmp, unsigned short x, unsigned short y,
+			     unsigned short x2, unsigned short y2,
+			     unsigned char color)
+	{
+	    unsigned short tx, ty;
+	    for (ty = y; ty height; j++)
+	    {
+		memcpy(&dbl_buffer[screen_offset], &bmp->data[bitmap_offset], bmp->width);
 
-void main()
-{
-    unsigned char key;
-    do
-    {
-        key = 0;
-        if (kbhit()) key = getch();
+		bitmap_offset += bmp->width;
+		screen_offset += SCREEN_WIDTH;
+	    }
+	}
 
-        /* You must clear the double buffer every time to avoid evil messes
-            (go ahead and try without this, you will see) */
-        memset (dbl_buffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
+	void main()
+	{
+	    unsigned char key;
+	    do
+	    {
+		key = 0;
+		if (kbhit()) key = getch();
 
-        union REGS regs;
+		/* You must clear the double buffer every time to avoid evil messes
+		    (go ahead and try without this, you will see) */
+		memset (dbl_buffer, 0, SCREEN_WIDTH * SCREEN_HEIGHT);
 
-	regs.h.ah = 0x00;  /* function 00h = mode set */
-	regs.h.al = 0x13;  /* 256-color */
-	int86(0x10,&regs,&regs); /* do it! */
+		union REGS regs;
 
-        /* Draws the double buffer */
-        update_screen();
+		regs.h.ah = 0x00;  /* function 00h = mode set */
+		regs.h.al = 0x13;  /* 256-color */
+		int86(0x10,&regs,&regs); /* do it! */
 
-    } while (key != 27);	/* keep going until escape */
+		/* Draws the double buffer */
+		update_screen();
+
+	    } while (key != 27);	/* keep going until escape */
+	}
 }
