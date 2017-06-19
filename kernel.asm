@@ -9,5 +9,6 @@ global start
 extern kmain            
 start:
         cli             
-        call kmain      
+        call kmain
+        call startgui
         hlt             
